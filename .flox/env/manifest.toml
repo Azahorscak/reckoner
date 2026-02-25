@@ -1,0 +1,68 @@
+# Reckoner – flox build definition
+# https://flox.dev/docs/
+
+version = 1
+
+[install]
+go.pkg-path = "go"
+gnumake.pkg-path = "gnumake"
+golangci-lint.pkg-path = "golangci-lint"
+
+[vars]
+RECKONER_VERSION = "0.0.0"
+
+[hook]
+on-activate = """
+  echo ""
+  echo "🔧 reckoner dev environment"
+  echo ""
+  echo "  make build   – compile binary"
+  echo "  make test    – run tests"
+  echo "  make lint    – run linter"
+  echo "  flox build   – build flox package"
+  echo ""
+"""
+
+[profile]
+bash = """
+  test_reckoner() {
+    echo "Building reckoner…"
+    flox build reckoner && ./result-reckoner/bin/reckoner version
+  }
+"""
+zsh = """
+  test_reckoner() {
+    echo "Building reckoner…"
+    flox build reckoner && ./result-reckoner/bin/reckoner version
+  }
+"""
+
+[build.reckoner]
+description = "A declarative Helm chart installer"
+version = "${RECKONER_VERSION}"
+
+runtime-packages = [
+  "kubernetes-helm",
+]
+
+command = """
+  set -euo pipefail
+
+  mkdir -p "$out/bin"
+
+  export CGO_ENABLED=0
+
+  go build \
+    -mod=vendor \
+    -ldflags "-X main.version=${RECKONER_VERSION} -X main.commit=flox-build -s -w" \
+    -o "$out/bin/reckoner" \
+    .
+"""
+
+[options]
+systems = [
+  "x86_64-linux",
+  "aarch64-linux",
+  "x86_64-darwin",
+  "aarch64-darwin",
+]
